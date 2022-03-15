@@ -9,8 +9,8 @@ public class AIPlayer extends Player {
     Move move;
     Board board;
 
-    public AIPlayer(GameManager gm, Board board) {
-        super(gm, board);
+    public AIPlayer(GameManager gm, Board board, boolean isWhite) {
+        super(gm, board, isWhite);
         search = new Search(board, this);
     }
 
@@ -18,7 +18,7 @@ public class AIPlayer extends Player {
     public void update() {
         if (moveFound) {
             moveFound = false;
-            System.out.println("Computer chose move: " + move);
+            System.out.println("Computer (" + (isWhite ? "white" : "black") + ") chose move: " + move);
             choseMove(move);
         }
     }

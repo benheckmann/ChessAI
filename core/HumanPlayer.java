@@ -4,11 +4,8 @@ import java.util.Scanner;
 
 public class HumanPlayer extends Player {
 
-    boolean isWhite;
-
     public HumanPlayer(GameManager gm, Board board, boolean isWhite) {
-        super(gm, board);
-        this.isWhite = isWhite;
+        super(gm, board, isWhite);
     }
 
     @Override

@@ -158,7 +158,7 @@ public class GameManager implements Runnable {
 	}
 
 	private Player CreatePlayer(PlayerType playerType, boolean isWhite) {
-		return playerType == PlayerType.Human ? new HumanPlayer(this, board, isWhite) : new AIPlayer(this, board);
+		return playerType == PlayerType.Human ? new HumanPlayer(this, board, isWhite) : new AIPlayer(this, board, isWhite);
 	}
 
 	private PlayerType askPlayerType(boolean forWhite) {
