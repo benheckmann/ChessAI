@@ -48,7 +48,6 @@ public class GameManager implements Runnable {
 		zobristDebug = board.ZobristKey;
 
 		if (gameResult == Result.Playing) {
-			// LogAIDiagnostics ();
 			playerToMove.update();
 		}
 	}
@@ -62,10 +61,6 @@ public class GameManager implements Runnable {
 	}
 
 	void NewGame(PlayerType whitePlayerType, PlayerType blackPlayerType) {
-		// if (whitePlayerType == PlayerType.AI || blackPlayerType == PlayerType.AI) {
-		// 	System.out.println("Error: AI is not yet implemented");
-		// 	return;
-		// }
 		gameMoves.clear();
 		if (loadCustomPosition) {
 			board.LoadPosition(customPosition);
@@ -146,7 +141,7 @@ public class GameManager implements Runnable {
 			return Result.Repetition;
 		}
 
-		// Look for insufficient material (not all cases implemented yet)
+		// look for insufficient material
 		int numPawns = board.pawns[Board.WHITE_INDEX].size() + board.pawns[Board.BLACK_INDEX].size();
 		int numRooks = board.rooks[Board.WHITE_INDEX].size() + board.rooks[Board.BLACK_INDEX].size();
 		int numQueens = board.queens[Board.WHITE_INDEX].size() + board.queens[Board.BLACK_INDEX].size();

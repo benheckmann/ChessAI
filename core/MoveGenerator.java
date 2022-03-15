@@ -40,8 +40,10 @@ public class MoveGenerator {
         return generateMoves(board, true);
     }
 
-    // Generates list of legal moves in current position.
-    // Quiet moves (non captures) can optionally be excluded.
+    /**
+     * Generates list of legal moves in current position. Non capturing moves can
+     * optionally be excluded.
+     */
     public List<Move> generateMoves(Board board, boolean includeQuietMoves) {
         this.board = board;
         genQuiets = includeQuietMoves;
@@ -49,8 +51,8 @@ public class MoveGenerator {
 
         CalculateAttackData();
         generateKingMoves();
-
-        // Only king moves are valid in a double check position
+        
+        // only king moves are valid in a double check position
         if (inDoubleCheck) {
             return moves;
         }
@@ -63,7 +65,7 @@ public class MoveGenerator {
     }
 
     public boolean isInCheck() {
-        // this will only return correct value after GenerateMoves() has been called
+        // assumes GenerateMoves() has been called
         return inCheck;
     }
 
@@ -88,28 +90,22 @@ public class MoveGenerator {
             int targetSquare = PrecomputedMoveData.kingMoves[friendlyKingSquare][i];
             int pieceOnTargetSquare = board.Square[targetSquare];
 
-            // Skip squares occupied by friendly pieces
             if (Piece.isColour(pieceOnTargetSquare, friendlyColour)) {
                 continue;
             }
 
             boolean isCapture = Piece.isColour(pieceOnTargetSquare, opponentColour);
             if (!isCapture) {
-                // King can't move to square marked as under enemy control, unless he is
-                // capturing that piece
-                // Also skip if not generating quiet moves
                 if (!genQuiets || SquareIsInCheckRay(targetSquare)) {
                     continue;
                 }
             }
 
-            // Safe for king to move to this square
             if (!SquareIsAttacked(targetSquare)) {
                 moves.add(new Move(friendlyKingSquare, targetSquare));
-
-                // Castling:
+                // castling
                 if (!inCheck && !isCapture) {
-                    // Castle kingside
+                    // kingside
                     if ((targetSquare == BoardUtility.f1 || targetSquare == BoardUtility.f8)
                             && HasKingsideCastleRight()) {
                         int castleKingsideSquare = targetSquare + 1;
@@ -119,7 +115,7 @@ public class MoveGenerator {
                             }
                         }
                     }
-                    // Castle queenside
+                    // queenside
                     else if ((targetSquare == BoardUtility.d1 || targetSquare == BoardUtility.d8)
                             && HasQueensideCastleRight()) {
                         int castleQueensideSquare = targetSquare - 1;
@@ -155,17 +151,12 @@ public class MoveGenerator {
 
     void generateSlidingPieceMoves(int startSquare, int startDirIndex, int endDirIndex) {
         boolean isPinned = IsPinned(startSquare);
-
-        // If this piece is pinned, and the king is in check, this piece cannot move
         if (inCheck && isPinned) {
             return;
         }
 
         for (int directionIndex = startDirIndex; directionIndex < endDirIndex; directionIndex++) {
             int currentDirOffset = PrecomputedMoveData.directionOffsets[directionIndex];
-
-            // If pinned, this piece can only move along the ray towards/away from the
-            // friendly king, so skip other directions
             if (isPinned && !IsMovingAlongRay(currentDirOffset, friendlyKingSquare, startSquare)) {
                 continue;
             }
@@ -173,8 +164,6 @@ public class MoveGenerator {
             for (int n = 0; n < PrecomputedMoveData.numSquaresToEdge[startSquare][directionIndex]; n++) {
                 int targetSquare = startSquare + currentDirOffset * (n + 1);
                 int targetSquarePiece = board.Square[targetSquare];
-
-                // Blocked by friendly piece, so stop looking in this direction
                 if (Piece.isColour(targetSquarePiece, friendlyColour)) {
                     break;
                 }
@@ -186,8 +175,6 @@ public class MoveGenerator {
                         moves.add(new Move(startSquare, targetSquare));
                     }
                 }
-                // If square not empty, can't move any further in this direction
-                // Also, if this move blocked a check, further moves won't block the check
                 if (isCapture || movePreventsCheck) {
                     break;
                 }
@@ -201,7 +188,6 @@ public class MoveGenerator {
         for (int i = 0; i < myKnights.size(); i++) {
             int startSquare = myKnights.get(i);
 
-            // Knight cannot move if it is pinned
             if (IsPinned(startSquare)) {
                 continue;
             }
@@ -211,8 +197,6 @@ public class MoveGenerator {
                 int targetSquarePiece = board.Square[targetSquare];
                 boolean isCapture = Piece.isColour(targetSquarePiece, opponentColour);
                 if (genQuiets || isCapture) {
-                    // Skip if square contains friendly piece, or if in check and knight is not
-                    // interposing/capturing checking piece
                     if (Piece.isColour(targetSquarePiece, friendlyColour)
                             || (inCheck && !SquareIsInCheckRay(targetSquare))) {
                         continue;
@@ -244,11 +228,8 @@ public class MoveGenerator {
 
                 int squareOneForward = startSquare + pawnOffset;
 
-                // Square ahead of pawn is empty: forward moves
                 if (board.Square[squareOneForward] == Piece.None) {
-                    // Pawn not pinned, or is moving along line of pin
                     if (!IsPinned(startSquare) || IsMovingAlongRay(pawnOffset, startSquare, friendlyKingSquare)) {
-                        // Not in check, or pawn is interposing checking piece
                         if (!inCheck || SquareIsInCheckRay(squareOneForward)) {
                             if (oneStepFromPromotion) {
                                 MakePromotionMoves(startSquare, squareOneForward);
@@ -257,11 +238,9 @@ public class MoveGenerator {
                             }
                         }
 
-                        // Is on starting square (so can move two forward if not blocked)
                         if (rank == startRank) {
                             int squareTwoForward = squareOneForward + pawnOffset;
                             if (board.Square[squareTwoForward] == Piece.None) {
-                                // Not in check, or pawn is interposing checking piece
                                 if (!inCheck || SquareIsInCheckRay(squareTwoForward)) {
                                     moves.add(new Move(startSquare, squareTwoForward, Move.Flag.PawnTwoForward));
                                 }
@@ -271,26 +250,15 @@ public class MoveGenerator {
                 }
             }
 
-            // Pawn captures.
             for (int j = 0; j < 2; j++) {
-                // Check if square exists diagonal to pawn
                 if (PrecomputedMoveData.numSquaresToEdge[startSquare][PrecomputedMoveData.pawnAttackDirections[friendlyColourIndex][j]] > 0) {
-                    // move in direction friendly pawns attack to get square from which enemy pawn
-                    // would attack
                     int pawnCaptureDir = PrecomputedMoveData.directionOffsets[PrecomputedMoveData.pawnAttackDirections[friendlyColourIndex][j]];
                     int targetSquare = startSquare + pawnCaptureDir;
                     int targetPiece = board.Square[targetSquare];
-
-                    // If piece is pinned, and the square it wants to move to is not on same line as
-                    // the pin, then skip this direction
                     if (IsPinned(startSquare) && !IsMovingAlongRay(pawnCaptureDir, friendlyKingSquare, startSquare)) {
                         continue;
                     }
-
-                    // Regular capture
                     if (Piece.isColour(targetPiece, opponentColour)) {
-                        // If in check, and piece is not capturing/interposing the checking piece, then
-                        // skip to next square
                         if (inCheck && !SquareIsInCheckRay(targetSquare)) {
                             continue;
                         }
@@ -300,8 +268,6 @@ public class MoveGenerator {
                             moves.add(new Move(startSquare, targetSquare));
                         }
                     }
-
-                    // Capture en-passant
                     if (targetSquare == enPassantSquare) {
                         int epCapturedPawnSquare = targetSquare + ((board.whiteToMove) ? -8 : 8);
                         if (!InCheckAfterEnPassant(startSquare, targetSquare, epCapturedPawnSquare)) {
@@ -387,8 +353,6 @@ public class MoveGenerator {
 
     void CalculateAttackData() {
         GenSlidingAttackMap();
-        // Search squares in all directions around friendly king for checks/pins by
-        // enemy sliding pieces (queen, rook, bishop)
         int startDirIndex = 0;
         int endDirIndex = 8;
 
@@ -409,34 +373,23 @@ public class MoveGenerator {
                 int squareIndex = friendlyKingSquare + directionOffset * (i + 1);
                 rayMask |= 1l << squareIndex;
                 int piece = board.Square[squareIndex];
-
-                // This square contains a piece
                 if (piece != Piece.None) {
                     if (Piece.isColour(piece, friendlyColour)) {
-                        // First friendly piece we have come across in this direction, so it might be
-                        // pinned
                         if (!isFriendlyPieceAlongRay) {
                             isFriendlyPieceAlongRay = true;
                         }
-                        // This is the second friendly piece we've found in this direction, therefore
-                        // pin is not possible
                         else {
                             break;
                         }
                     }
-                    // This square contains an enemy piece
                     else {
                         int pieceType = Piece.getPieceType(piece);
-
-                        // Check if piece is in bitmask of pieces able to move in current direction
                         if (isDiagonal && Piece.isBishopOrQueen(pieceType)
                                 || !isDiagonal && Piece.isRookOrQueen(pieceType)) {
-                            // Friendly piece blocks the check, so this is a pin
                             if (isFriendlyPieceAlongRay) {
                                 pinsExistInPosition = true;
                                 pinRayBitmask |= rayMask;
                             }
-                            // No friendly piece blocking the attack, so this is a check
                             else {
                                 checkRayBitmask |= rayMask;
                                 inDoubleCheck = inCheck; // if already in check, then this is double check
@@ -444,22 +397,16 @@ public class MoveGenerator {
                             }
                             break;
                         } else {
-                            // This enemy piece is not able to move in the current direction, and so is
-                            // blocking any checks/pins
                             break;
                         }
                     }
                 }
             }
-            // Stop searching for pins if in double check, as the king is the only piece
-            // able to move in that case anyway
             if (inDoubleCheck) {
                 break;
             }
 
         }
-
-        // Knight attacks
         PieceList opponentKnights = board.knights[opponentColourIndex];
         opponentKnightAttacks = 0;
         boolean isKnightCheck = false;
@@ -475,8 +422,6 @@ public class MoveGenerator {
                 checkRayBitmask |= 1l << startSquare;
             }
         }
-
-        // Pawn attacks
         PieceList opponentPawns = board.pawns[opponentColourIndex];
         opponentPawnAttackMap = 0;
         boolean isPawnCheck = false;
@@ -506,7 +451,6 @@ public class MoveGenerator {
     }
 
     boolean InCheckAfterEnPassant(int startSquare, int targetSquare, int epCapturedPawnSquare) {
-        // Update board to reflect en-passant capture
         board.Square[targetSquare] = board.Square[startSquare];
         board.Square[startSquare] = Piece.None;
         board.Square[epCapturedPawnSquare] = Piece.None;
@@ -515,8 +459,6 @@ public class MoveGenerator {
         if (SquareAttackedAfterEPCapture(epCapturedPawnSquare, startSquare)) {
             inCheckAfterEpCapture = true;
         }
-
-        // Undo change to board
         board.Square[targetSquare] = Piece.None;
         board.Square[startSquare] = Piece.Pawn | friendlyColour;
         board.Square[epCapturedPawnSquare] = Piece.Pawn | opponentColour;
@@ -527,39 +469,25 @@ public class MoveGenerator {
         if (BitBoardUtility.ContainsSquare(opponentAttackMapNoPawns, friendlyKingSquare)) {
             return true;
         }
-
-        // Loop through the horizontal direction towards ep capture to see if any enemy
-        // piece now attacks king
         int dirIndex = (epCaptureSquare < friendlyKingSquare) ? 2 : 3;
         for (int i = 0; i < PrecomputedMoveData.numSquaresToEdge[friendlyKingSquare][dirIndex]; i++) {
             int squareIndex = friendlyKingSquare + PrecomputedMoveData.directionOffsets[dirIndex] * (i + 1);
             int piece = board.Square[squareIndex];
             if (piece != Piece.None) {
-                // Friendly piece is blocking view of this square from the enemy.
                 if (Piece.isColour(piece, friendlyColour)) {
                     break;
                 }
-                // This square contains an enemy piece
                 else {
                     if (Piece.isRookOrQueen(piece)) {
                         return true;
                     } else {
-                        // This piece is not able to move in the current direction, and is therefore
-                        // blocking any checks along this line
                         break;
                     }
                 }
             }
         }
-
-        // check if enemy pawn is controlling this square (can't use pawn attack
-        // bitboard, because pawn has been captured)
         for (int i = 0; i < 2; i++) {
-            // Check if square exists diagonal to friendly king from which enemy pawn could
-            // be attacking it
             if (PrecomputedMoveData.numSquaresToEdge[friendlyKingSquare][PrecomputedMoveData.pawnAttackDirections[friendlyColourIndex][i]] > 0) {
-                // move in direction friendly pawns attack to get square from which enemy pawn
-                // would attack
                 int piece = board.Square[friendlyKingSquare
                         + PrecomputedMoveData.directionOffsets[PrecomputedMoveData.pawnAttackDirections[friendlyColourIndex][i]]];
                 if (piece == (Piece.Pawn | opponentColour)) // is enemy pawn

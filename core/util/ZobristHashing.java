@@ -81,9 +81,9 @@ public class ZobristHashing {
         sideToMove = randomNumbers.poll();
     }
 
-    /// Calculate zobrist key from current board position. This should only be used
-    /// after setting board from fen; during search the key should be updated
-    /// incrementally.
+    /**
+     * Calculate zobrist key from current board position.
+     */
     public static long calculateZobristKey (Board board) {
         long zobristKey = 0;
 

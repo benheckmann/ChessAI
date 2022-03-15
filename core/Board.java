@@ -61,7 +61,7 @@ public class Board {
         MakeMove(move, false);
     }
 
-    // The inSearch parameter controls whether this move should be recorded in the
+    // inSearch parameter controls whether this move should be recorded in the
     // game history (for detecting three-fold repetition)
     public void MakeMove(Move move, boolean inSearch) {
         Integer oldEnPassantFile = (currentGameState >> 4) & 15;

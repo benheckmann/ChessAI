@@ -18,7 +18,7 @@ public class AIPlayer extends Player {
     public void update() {
         if (moveFound) {
             moveFound = false;
-            System.out.println("AI chose move: " + move);
+            System.out.println("Computer chose move: " + move);
             choseMove(move);
         }
     }
