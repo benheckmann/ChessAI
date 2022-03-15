@@ -13,53 +13,53 @@ public class Piece {
     public static final int White = 8;
     public static final int Black = 16;
 
-    final static int typeMask = 0b00111;
-    final static int blackMask = 0b10000;
-    final static int whiteMask = 0b01000;
-    final static int colourMask = whiteMask | blackMask;
+    final static int TYPE_MASK = 0b00111;
+    final static int BLACK_MASK = 0b10000;
+    final static int WHITE_MASK = 0b01000;
+    final static int COLOUR_MASK = WHITE_MASK | BLACK_MASK;
 
     private static char[] whitePiecesUnicode = { ' ', '\u2654', '\u2659', '\u2658', '?', '\u2657', '\u2656', '\u2655' };
     private static char[] blackPiecesUnicode = { ' ', '\u265A', '\u265F', '\u265E', '?', '\u265D', '\u265C', '\u265B' };
     private static char[] whitePiecesAscii = { ' ', 'K', 'P', 'N', '?', 'B', 'R', 'Q' };
     private static char[] blackPiecesAscii = { ' ', 'k', 'p', 'n', '?', 'b', 'r', 'q' };
 
-    public static boolean IsColour (int piece, int colour) {
-        return (piece & colourMask) == colour;
+    public static boolean isColour (int piece, int colour) {
+        return (piece & COLOUR_MASK) == colour;
     }
 
-    public static int Colour (int piece) {
-        return piece & colourMask;
+    public static int getColour(int piece) {
+        return piece & COLOUR_MASK;
     }
 
-    public static int PieceType (int piece) {
-        return piece & typeMask;
+    public static int getPieceType(int piece) {
+        return piece & TYPE_MASK;
     }
 
-    public static boolean IsRookOrQueen (int piece) {
+    public static boolean isRookOrQueen(int piece) {
         return (piece & 0b110) == 0b110;
     }
 
-    public static boolean IsBishopOrQueen (int piece) {
+    public static boolean isBishopOrQueen(int piece) {
         return (piece & 0b101) == 0b101;
     }
 
-    public static boolean IsSlidingPiece (int piece) {
+    public static boolean isSlidingPiece(int piece) {
         return (piece & 0b100) != 0;
     }
 
     public static char pieceToUnicode(int piece) {
-        if (IsColour(piece, White)) {
-            return whitePiecesUnicode[PieceType(piece)];
+        if (isColour(piece, White)) {
+            return whitePiecesUnicode[getPieceType(piece)];
         } else {
-            return blackPiecesUnicode[PieceType(piece)];
+            return blackPiecesUnicode[getPieceType(piece)];
         }
     }
 
     public static char pieceToAscii(int piece) {
-        if (IsColour(piece, White)) {
-            return whitePiecesAscii[PieceType(piece)];
+        if (isColour(piece, White)) {
+            return whitePiecesAscii[getPieceType(piece)];
         } else {
-            return blackPiecesAscii[PieceType(piece)];
+            return blackPiecesAscii[getPieceType(piece)];
         }
     }
 }

@@ -30,7 +30,7 @@ public class FenUtility {
         int rank = 7;
 
         for (Character symbol : sections[0].toCharArray()) {
-            if (symbol == '/') {
+            if (symbol.equals('/')) {
                 file = 0;
                 rank--;
             } else {
@@ -45,7 +45,7 @@ public class FenUtility {
             }
         }
 
-        loadedPositionInfo.whiteToMove = (sections[1] == "w");
+        loadedPositionInfo.whiteToMove = sections[1].equals("w");
 
         String castlingRights = (sections.length > 2) ? sections[2] : "KQkq";
         loadedPositionInfo.whiteCastleKingside = castlingRights.contains("K");
@@ -55,8 +55,8 @@ public class FenUtility {
 
         if (sections.length > 3) {
             String enPassantFileName = String.valueOf(sections[3].charAt(0));
-            if (BoardRepresentation.fileNames.contains(enPassantFileName)) {
-                loadedPositionInfo.epFile = BoardRepresentation.fileNames.indexOf(enPassantFileName) + 1;
+            if (BoardUtility.fileNames.contains(enPassantFileName)) {
+                loadedPositionInfo.epFile = BoardUtility.fileNames.indexOf(enPassantFileName) + 1;
             }
         }
 
@@ -84,8 +84,8 @@ public class FenUtility {
                         fen += numEmptyFiles;
                         numEmptyFiles = 0;
                     }
-                    boolean isBlack = Piece.IsColour(piece, Piece.Black);
-                    int pieceType = Piece.PieceType(piece);
+                    boolean isBlack = Piece.isColour(piece, Piece.Black);
+                    int pieceType = Piece.getPieceType(piece);
                     Character pieceChar = ' ';
                     switch (pieceType) {
                         case Piece.Rook:
@@ -123,7 +123,7 @@ public class FenUtility {
 
         // Side to move
         fen += ' ';
-        fen += (board.WhiteToMove) ? 'w' : 'b';
+        fen += (board.whiteToMove) ? 'w' : 'b';
 
         // Castling
         boolean whiteKingside = (board.currentGameState & 1) == 1;
@@ -143,8 +143,8 @@ public class FenUtility {
         if (epFile == 0) {
             fen += '-';
         } else {
-            String fileName = String.valueOf(BoardRepresentation.fileNames.charAt(epFile - 1));
-            int epRank = (board.WhiteToMove) ? 6 : 3;
+            String fileName = String.valueOf(BoardUtility.fileNames.charAt(epFile - 1));
+            int epRank = (board.whiteToMove) ? 6 : 3;
             fen += fileName + epRank;
         }
 

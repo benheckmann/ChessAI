@@ -25,8 +25,8 @@ public class BoardDisplayer {
         this.perspective = isWhitePerspective ? Perspective.White : Perspective.Black;
     }
 
-    public String displayCurrentState() {
-        return boardToString(board, perspective);
+    public void displayCurrentState() {
+        System.out.println(boardToString(board, perspective));
     }
 
     public static String boardToString(Board board) {
@@ -43,8 +43,8 @@ public class BoardDisplayer {
             for (int j = 0; j < 8; j++) {
                 int pieceIndex = color.equals(Perspective.White) ? (7 - i) * 8 + j : i * 8 + (7 - j);
                 int piece = squares[pieceIndex];
-                sb.append(Piece.pieceToAscii(piece));
-                // ...or sb.append(Piece.pieceToUnicode(piece));
+                // sb.append(Piece.pieceToAscii(piece));    // letters are preferred over the (tiny) unicode characters
+                sb.append(Piece.pieceToUnicode(piece));
                 if (j < 7) {
                     sb.append(" │ ");
                 } else {

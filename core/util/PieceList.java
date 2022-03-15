@@ -26,25 +26,24 @@ public class PieceList {
 		this(16);
 	}
 
-	// getter
-	public int Count() {
+	public int size() {
 		return numPieces;
 	}
 
-	public void AddPieceAtSquare (int square) {
+	public void addPieceAtSquare (int square) {
 		occupiedSquares[numPieces] = square;
 		map[square] = numPieces;
 		numPieces++;
 	}
 
-	public void RemovePieceAtSquare (int square) {
+	public void removePieceAtSquare (int square) {
 		int pieceIndex = map[square];
 		occupiedSquares[pieceIndex] = occupiedSquares[numPieces - 1];
 		map[occupiedSquares[pieceIndex]] = pieceIndex;
 		numPieces--;
 	}
 
-	public void MovePiece (int startSquare, int targetSquare) {
+	public void movePiece (int startSquare, int targetSquare) {
 		int pieceIndex = map[startSquare];
 		occupiedSquares[pieceIndex] = targetSquare;
 		map[targetSquare] = pieceIndex;

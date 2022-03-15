@@ -4,40 +4,50 @@ import java.util.Scanner;
 
 public class HumanPlayer extends Player {
 
-    Board board;
+    boolean isWhite;
 
-    public HumanPlayer(GameManager gm, Board board) {
-        this.gm = gm;
-        this.board = board;
+    public HumanPlayer(GameManager gm, Board board, boolean isWhite) {
+        super(gm, board);
+        this.isWhite = isWhite;
     }
 
     @Override
-    public void NotifyTurnToMove() {
-        System.out.println("Enter next move: ");
-        Update();
+    public void notifyTurnToMove() {
+        System.out.println("Enter next move for " + (isWhite ? "white" : "black") + ": ");
+        update();
     }
 
     @Override
-    public void Update() {
-        HandleInput();
+    public void update() {
+        choseMoveFromInput();
     }
 
-    void HandleInput() {
+    void choseMoveFromInput() {
         Scanner scanner = new Scanner(System.in);
         Move move;
         while (true) {
             String input = scanner.nextLine();
+            if (input.equals("?")) {
+                printHelp();
+                continue;
+            }
             try {
                 move = new Move(board, input);
                 break;
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid move: " + input);
-                System.out.println("Please enter a valid move (e.g. e2e4, e7e5, e1g1 (white short castling), e7e8q (for promotion)): ");
-                input = scanner.nextLine();
+                System.out.println(e.getMessage());
+                System.out.println("Please enter a valid move or '?' for help: ");
+                continue;
             }
         }
-        ChoseMove(move);
+        choseMove(move);
         scanner.close();
+    }
+
+    void printHelp() {
+        System.out.println("A move is represented in long algebraic notation (e.g. e2e4).");
+        System.out.println("The first coordinate is the source square, the second coordinate is the destination square.");
+        System.out.println("Special moves include: e1g1 (white short castling), e7e8q (for promotion).");
     }
 }
 

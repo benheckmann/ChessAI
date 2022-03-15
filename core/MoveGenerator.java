@@ -14,7 +14,6 @@ public class MoveGenerator {
 
     public PromotionMode promotionsToGenerate = PromotionMode.All;
 
-    // ---- Instance variables ----
     List<Move> moves;
     boolean isWhiteToMove;
     int friendlyColour;
@@ -37,39 +36,38 @@ public class MoveGenerator {
     boolean genQuiets;
     Board board;
 
-    public List<Move> GenerateMoves(Board board) {
-        return GenerateMoves(board, true);
+    public List<Move> generateMoves(Board board) {
+        return generateMoves(board, true);
     }
 
     // Generates list of legal moves in current position.
-    // Quiet moves (non captures) can optionally be excluded. This is used in
-    // quiescence search.
-    public List<Move> GenerateMoves(Board board, boolean includeQuietMoves) {
+    // Quiet moves (non captures) can optionally be excluded.
+    public List<Move> generateMoves(Board board, boolean includeQuietMoves) {
         this.board = board;
         genQuiets = includeQuietMoves;
-        Init();
+        init();
 
         CalculateAttackData();
-        GenerateKingMoves();
+        generateKingMoves();
 
         // Only king moves are valid in a double check position
         if (inDoubleCheck) {
             return moves;
         }
 
-        GenerateSlidingMoves();
-        GenerateKnightMoves();
-        GeneratePawnMoves();
+        generateSlidingMoves();
+        generateKnightMoves();
+        generatePawnMoves();
 
         return moves;
     }
 
-    public boolean InCheck() {
+    public boolean isInCheck() {
         // this will only return correct value after GenerateMoves() has been called
         return inCheck;
     }
 
-    void Init() {
+    void init() {
         moves = new LinkedList<Move>();
         inCheck = false;
         inDoubleCheck = false;
@@ -77,25 +75,25 @@ public class MoveGenerator {
         checkRayBitmask = 0;
         pinRayBitmask = 0;
 
-        isWhiteToMove = board.ColourToMove == Piece.White;
-        friendlyColour = board.ColourToMove;
-        opponentColour = board.OpponentColour;
-        friendlyKingSquare = board.KingSquare[board.ColourToMoveIndex];
-        friendlyColourIndex = (board.WhiteToMove) ? Board.WhiteIndex : Board.BlackIndex;
+        isWhiteToMove = board.colourToMove == Piece.White;
+        friendlyColour = board.colourToMove;
+        opponentColour = board.opponentColour;
+        friendlyKingSquare = board.KingSquare[board.colourToMoveIndex];
+        friendlyColourIndex = (board.whiteToMove) ? Board.WHITE_INDEX : Board.BLACK_INDEX;
         opponentColourIndex = 1 - friendlyColourIndex;
     }
 
-    void GenerateKingMoves() {
+    void generateKingMoves() {
         for (int i = 0; i < PrecomputedMoveData.kingMoves[friendlyKingSquare].length; i++) {
             int targetSquare = PrecomputedMoveData.kingMoves[friendlyKingSquare][i];
             int pieceOnTargetSquare = board.Square[targetSquare];
 
             // Skip squares occupied by friendly pieces
-            if (Piece.IsColour(pieceOnTargetSquare, friendlyColour)) {
+            if (Piece.isColour(pieceOnTargetSquare, friendlyColour)) {
                 continue;
             }
 
-            boolean isCapture = Piece.IsColour(pieceOnTargetSquare, opponentColour);
+            boolean isCapture = Piece.isColour(pieceOnTargetSquare, opponentColour);
             if (!isCapture) {
                 // King can't move to square marked as under enemy control, unless he is
                 // capturing that piece
@@ -112,7 +110,7 @@ public class MoveGenerator {
                 // Castling:
                 if (!inCheck && !isCapture) {
                     // Castle kingside
-                    if ((targetSquare == BoardRepresentation.f1 || targetSquare == BoardRepresentation.f8)
+                    if ((targetSquare == BoardUtility.f1 || targetSquare == BoardUtility.f8)
                             && HasKingsideCastleRight()) {
                         int castleKingsideSquare = targetSquare + 1;
                         if (board.Square[castleKingsideSquare] == Piece.None) {
@@ -122,7 +120,7 @@ public class MoveGenerator {
                         }
                     }
                     // Castle queenside
-                    else if ((targetSquare == BoardRepresentation.d1 || targetSquare == BoardRepresentation.d8)
+                    else if ((targetSquare == BoardUtility.d1 || targetSquare == BoardUtility.d8)
                             && HasQueensideCastleRight()) {
                         int castleQueensideSquare = targetSquare - 1;
                         if (board.Square[castleQueensideSquare] == Piece.None
@@ -137,25 +135,25 @@ public class MoveGenerator {
         }
     }
 
-    void GenerateSlidingMoves() {
+    void generateSlidingMoves() {
         PieceList rooks = board.rooks[friendlyColourIndex];
-        for (int i = 0; i < rooks.Count(); i++) {
-            GenerateSlidingPieceMoves(rooks.get(i), 0, 4);
+        for (int i = 0; i < rooks.size(); i++) {
+            generateSlidingPieceMoves(rooks.get(i), 0, 4);
         }
 
         PieceList bishops = board.bishops[friendlyColourIndex];
-        for (int i = 0; i < bishops.Count(); i++) {
-            GenerateSlidingPieceMoves(bishops.get(i), 4, 8);
+        for (int i = 0; i < bishops.size(); i++) {
+            generateSlidingPieceMoves(bishops.get(i), 4, 8);
         }
 
         PieceList queens = board.queens[friendlyColourIndex];
-        for (int i = 0; i < queens.Count(); i++) {
-            GenerateSlidingPieceMoves(queens.get(i), 0, 8);
+        for (int i = 0; i < queens.size(); i++) {
+            generateSlidingPieceMoves(queens.get(i), 0, 8);
         }
 
     }
 
-    void GenerateSlidingPieceMoves(int startSquare, int startDirIndex, int endDirIndex) {
+    void generateSlidingPieceMoves(int startSquare, int startDirIndex, int endDirIndex) {
         boolean isPinned = IsPinned(startSquare);
 
         // If this piece is pinned, and the king is in check, this piece cannot move
@@ -177,7 +175,7 @@ public class MoveGenerator {
                 int targetSquarePiece = board.Square[targetSquare];
 
                 // Blocked by friendly piece, so stop looking in this direction
-                if (Piece.IsColour(targetSquarePiece, friendlyColour)) {
+                if (Piece.isColour(targetSquarePiece, friendlyColour)) {
                     break;
                 }
                 boolean isCapture = targetSquarePiece != Piece.None;
@@ -197,10 +195,10 @@ public class MoveGenerator {
         }
     }
 
-    void GenerateKnightMoves() {
+    void generateKnightMoves() {
         PieceList myKnights = board.knights[friendlyColourIndex];
 
-        for (int i = 0; i < myKnights.Count(); i++) {
+        for (int i = 0; i < myKnights.size(); i++) {
             int startSquare = myKnights.get(i);
 
             // Knight cannot move if it is pinned
@@ -211,11 +209,11 @@ public class MoveGenerator {
             for (int knightMoveIndex = 0; knightMoveIndex < PrecomputedMoveData.knightMoves[startSquare].length; knightMoveIndex++) {
                 int targetSquare = PrecomputedMoveData.knightMoves[startSquare][knightMoveIndex];
                 int targetSquarePiece = board.Square[targetSquare];
-                boolean isCapture = Piece.IsColour(targetSquarePiece, opponentColour);
+                boolean isCapture = Piece.isColour(targetSquarePiece, opponentColour);
                 if (genQuiets || isCapture) {
                     // Skip if square contains friendly piece, or if in check and knight is not
                     // interposing/capturing checking piece
-                    if (Piece.IsColour(targetSquarePiece, friendlyColour)
+                    if (Piece.isColour(targetSquarePiece, friendlyColour)
                             || (inCheck && !SquareIsInCheckRay(targetSquare))) {
                         continue;
                     }
@@ -225,21 +223,21 @@ public class MoveGenerator {
         }
     }
 
-    void GeneratePawnMoves() {
+    void generatePawnMoves() {
         PieceList myPawns = board.pawns[friendlyColourIndex];
         int pawnOffset = (friendlyColour == Piece.White) ? 8 : -8;
-        int startRank = (board.WhiteToMove) ? 1 : 6;
-        int finalRankBeforePromotion = (board.WhiteToMove) ? 6 : 1;
+        int startRank = (board.whiteToMove) ? 1 : 6;
+        int finalRankBeforePromotion = (board.whiteToMove) ? 6 : 1;
 
         int enPassantFile = ((int) (board.currentGameState >> 4) & 15) - 1;
         int enPassantSquare = -1;
         if (enPassantFile != -1) {
-            enPassantSquare = 8 * ((board.WhiteToMove) ? 5 : 2) + enPassantFile;
+            enPassantSquare = 8 * ((board.whiteToMove) ? 5 : 2) + enPassantFile;
         }
 
-        for (int i = 0; i < myPawns.Count(); i++) {
+        for (int i = 0; i < myPawns.size(); i++) {
             int startSquare = myPawns.get(i);
-            int rank = BoardRepresentation.RankIndex(startSquare);
+            int rank = BoardUtility.RankIndex(startSquare);
             boolean oneStepFromPromotion = rank == finalRankBeforePromotion;
 
             if (genQuiets) {
@@ -290,7 +288,7 @@ public class MoveGenerator {
                     }
 
                     // Regular capture
-                    if (Piece.IsColour(targetPiece, opponentColour)) {
+                    if (Piece.isColour(targetPiece, opponentColour)) {
                         // If in check, and piece is not capturing/interposing the checking piece, then
                         // skip to next square
                         if (inCheck && !SquareIsInCheckRay(targetSquare)) {
@@ -305,7 +303,7 @@ public class MoveGenerator {
 
                     // Capture en-passant
                     if (targetSquare == enPassantSquare) {
-                        int epCapturedPawnSquare = targetSquare + ((board.WhiteToMove) ? -8 : 8);
+                        int epCapturedPawnSquare = targetSquare + ((board.whiteToMove) ? -8 : 8);
                         if (!InCheckAfterEnPassant(startSquare, targetSquare, epCapturedPawnSquare)) {
                             moves.add(new Move(startSquare, targetSquare, Move.Flag.EnPassantCapture));
                         }
@@ -332,11 +330,6 @@ public class MoveGenerator {
         return (rayDir == moveDir || -rayDir == moveDir);
     }
 
-    // boolean IsMovingAlongRay (int directionOffset, int absRayOffset) {
-    // return !((directionOffset == 1 || directionOffset == -1) && absRayOffset >=
-    // 7) && absRayOffset % directionOffset == 0;
-    // }
-
     boolean IsPinned(int square) {
         return pinsExistInPosition && ((pinRayBitmask >> square) & 1) != 0;
     }
@@ -346,13 +339,13 @@ public class MoveGenerator {
     }
 
     boolean HasKingsideCastleRight() {
-        int mask = (board.WhiteToMove) ? 1 : 4;
+        int mask = (board.whiteToMove) ? 1 : 4;
         return (board.currentGameState & mask) != 0;
 
     }
 
     boolean HasQueensideCastleRight() {
-        int mask = (board.WhiteToMove) ? 2 : 8;
+        int mask = (board.whiteToMove) ? 2 : 8;
         return (board.currentGameState & mask) != 0;
 
     }
@@ -361,23 +354,22 @@ public class MoveGenerator {
         opponentSlidingAttackMap = 0;
 
         PieceList enemyRooks = board.rooks[opponentColourIndex];
-        for (int i = 0; i < enemyRooks.Count(); i++) {
+        for (int i = 0; i < enemyRooks.size(); i++) {
             UpdateSlidingAttackPiece(enemyRooks.get(i), 0, 4);
         }
 
         PieceList enemyQueens = board.queens[opponentColourIndex];
-        for (int i = 0; i < enemyQueens.Count(); i++) {
+        for (int i = 0; i < enemyQueens.size(); i++) {
             UpdateSlidingAttackPiece(enemyQueens.get(i), 0, 8);
         }
 
         PieceList enemyBishops = board.bishops[opponentColourIndex];
-        for (int i = 0; i < enemyBishops.Count(); i++) {
+        for (int i = 0; i < enemyBishops.size(); i++) {
             UpdateSlidingAttackPiece(enemyBishops.get(i), 4, 8);
         }
     }
 
     void UpdateSlidingAttackPiece(int startSquare, int startDirIndex, int endDirIndex) {
-
         for (int directionIndex = startDirIndex; directionIndex < endDirIndex; directionIndex++) {
             int currentDirOffset = PrecomputedMoveData.directionOffsets[directionIndex];
             for (int n = 0; n < PrecomputedMoveData.numSquaresToEdge[startSquare][directionIndex]; n++) {
@@ -400,9 +392,9 @@ public class MoveGenerator {
         int startDirIndex = 0;
         int endDirIndex = 8;
 
-        if (board.queens[opponentColourIndex].Count() == 0) {
-            startDirIndex = (board.rooks[opponentColourIndex].Count() > 0) ? 0 : 4;
-            endDirIndex = (board.bishops[opponentColourIndex].Count() > 0) ? 8 : 4;
+        if (board.queens[opponentColourIndex].size() == 0) {
+            startDirIndex = (board.rooks[opponentColourIndex].size() > 0) ? 0 : 4;
+            endDirIndex = (board.bishops[opponentColourIndex].size() > 0) ? 8 : 4;
         }
 
         for (int dir = startDirIndex; dir < endDirIndex; dir++) {
@@ -420,7 +412,7 @@ public class MoveGenerator {
 
                 // This square contains a piece
                 if (piece != Piece.None) {
-                    if (Piece.IsColour(piece, friendlyColour)) {
+                    if (Piece.isColour(piece, friendlyColour)) {
                         // First friendly piece we have come across in this direction, so it might be
                         // pinned
                         if (!isFriendlyPieceAlongRay) {
@@ -434,11 +426,11 @@ public class MoveGenerator {
                     }
                     // This square contains an enemy piece
                     else {
-                        int pieceType = Piece.PieceType(piece);
+                        int pieceType = Piece.getPieceType(piece);
 
                         // Check if piece is in bitmask of pieces able to move in current direction
-                        if (isDiagonal && Piece.IsBishopOrQueen(pieceType)
-                                || !isDiagonal && Piece.IsRookOrQueen(pieceType)) {
+                        if (isDiagonal && Piece.isBishopOrQueen(pieceType)
+                                || !isDiagonal && Piece.isRookOrQueen(pieceType)) {
                             // Friendly piece blocks the check, so this is a pin
                             if (isFriendlyPieceAlongRay) {
                                 pinsExistInPosition = true;
@@ -472,7 +464,7 @@ public class MoveGenerator {
         opponentKnightAttacks = 0;
         boolean isKnightCheck = false;
 
-        for (int knightIndex = 0; knightIndex < opponentKnights.Count(); knightIndex++) {
+        for (int knightIndex = 0; knightIndex < opponentKnights.size(); knightIndex++) {
             int startSquare = opponentKnights.get(knightIndex);
             opponentKnightAttacks |= PrecomputedMoveData.knightAttackBitboards[startSquare];
 
@@ -489,7 +481,7 @@ public class MoveGenerator {
         opponentPawnAttackMap = 0;
         boolean isPawnCheck = false;
 
-        for (int pawnIndex = 0; pawnIndex < opponentPawns.Count(); pawnIndex++) {
+        for (int pawnIndex = 0; pawnIndex < opponentPawns.size(); pawnIndex++) {
             int pawnSquare = opponentPawns.get(pawnIndex);
             long pawnAttacks = PrecomputedMoveData.pawnAttackBitboards[pawnSquare][opponentColourIndex];
             opponentPawnAttackMap |= pawnAttacks;
@@ -544,12 +536,12 @@ public class MoveGenerator {
             int piece = board.Square[squareIndex];
             if (piece != Piece.None) {
                 // Friendly piece is blocking view of this square from the enemy.
-                if (Piece.IsColour(piece, friendlyColour)) {
+                if (Piece.isColour(piece, friendlyColour)) {
                     break;
                 }
                 // This square contains an enemy piece
                 else {
-                    if (Piece.IsRookOrQueen(piece)) {
+                    if (Piece.isRookOrQueen(piece)) {
                         return true;
                     } else {
                         // This piece is not able to move in the current direction, and is therefore

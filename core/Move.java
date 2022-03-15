@@ -2,6 +2,8 @@ package core;
 
 import java.util.List;
 
+import core.util.BoardUtility;
+
 public class Move {
 
     public static class Flag {
@@ -18,11 +20,12 @@ public class Move {
     // Bits 0-5 store the index of the start square
     // Bits 6-11 store the index of the target square
     // Bits 12-15 store the flag
-    static final short startSquareMask = (short) 0b0000000000111111;
-    static final short targetSquareMask = (short) 0b0000111111000000;
-    static final short flagMask = (short) 0b0111000000000000;
+    static final short START_SQUARE_MASK = (short) 0b0000000000111111;
+    static final short TARGET_SQUARE_MASK = (short) 0b0000111111000000;
+    static final short FLAG_MASK = (short) 0b0111000000000000;
 
     public final short moveValue;
+    public Object[] moves;
 
     public Move(short moveValue) {
         this.moveValue = moveValue;
@@ -54,22 +57,22 @@ public class Move {
     public static short parseMove(Board board, String lan) {
         lan = lan.toLowerCase();
         if (!isValidLan(lan)) {
-            throw new IllegalArgumentException("Invalid move: " + lan);
+            throw new IllegalArgumentException("The input '" + lan + "' does not represent long algebraic notation.");
         }
-        int startSquare = BoardRepresentation.IndexFromSquareName(lan.substring(0, 2));
-        int targetSquare = BoardRepresentation.IndexFromSquareName(lan.substring(2, 4));
+        int startSquare = BoardUtility.getIndexFromSquareName(lan.substring(0, 2));
+        int targetSquare = BoardUtility.getIndexFromSquareName(lan.substring(2, 4));
         int wantedPromotionFlag = lan.length() == 5 ? "qnrb".indexOf(lan.substring(4)) + 3 : 0;
         boolean moveIsLegal = false;
         Move chosenMove = null;
         MoveGenerator moveGenerator = new MoveGenerator();
-        List<Move> legalMoves = moveGenerator.GenerateMoves(board);
+        List<Move> legalMoves = moveGenerator.generateMoves(board);
         for (Move legalMove : legalMoves) {
-            if (legalMove.StartSquare() == startSquare && legalMove.TargetSquare() == targetSquare) {
-                if (legalMove.IsPromotion()){
-                    if(legalMove.MoveFlag() == Move.Flag.PromoteToQueen && (wantedPromotionFlag == Move.Flag.PromoteToKnight)){
+            if (legalMove.getStartSquare() == startSquare && legalMove.getTargetSquare() == targetSquare) {
+                if (legalMove.isPromotion()){
+                    if(legalMove.getMoveFlag() == Move.Flag.PromoteToQueen && (wantedPromotionFlag == Move.Flag.PromoteToKnight)){
                         break;
                     }
-                    if(legalMove.MoveFlag() != Move.Flag.PromoteToQueen && (wantedPromotionFlag != Move.Flag.PromoteToKnight)){
+                    if(legalMove.getMoveFlag() != Move.Flag.PromoteToQueen && (wantedPromotionFlag != Move.Flag.PromoteToKnight)){
                         continue;
                     }
                 }
@@ -82,31 +85,30 @@ public class Move {
         if (moveIsLegal) {
             return chosenMove.moveValue;
         } else {
-            throw new IllegalArgumentException("Invalid move: " + lan);
+            throw new IllegalArgumentException("Illegal move: " + lan);
         }
     }
 
-    // getter
-    public int StartSquare() {
-        return moveValue & startSquareMask;
+    public int getStartSquare() {
+        return moveValue & START_SQUARE_MASK;
     }
 
-    public int TargetSquare() {
-        return (moveValue & targetSquareMask) >> 6;
+    public int getTargetSquare() {
+        return (moveValue & TARGET_SQUARE_MASK) >> 6;
     }
 
-    public boolean IsPromotion() {
-        int flag = MoveFlag();
+    public boolean isPromotion() {
+        int flag = getMoveFlag();
         return flag == Flag.PromoteToQueen || flag == Flag.PromoteToRook || flag == Flag.PromoteToKnight
                 || flag == Flag.PromoteToBishop;
     }
 
-    public int MoveFlag() {
+    public int getMoveFlag() {
         return moveValue >> 12;
     }
 
-    public int PromotionPieceType() {
-        switch (MoveFlag()) {
+    public int getPromotionPieceType() {
+        switch (getMoveFlag()) {
             case Flag.PromoteToRook:
                 return Piece.Rook;
             case Flag.PromoteToKnight:
@@ -121,13 +123,13 @@ public class Move {
 
     }
 
-    public static Move InvalidMove() {
+    public static Move getInvalidMove() {
         return new Move((short) 0);
 
     }
 
-    public static boolean SameMove(Move a, Move b) {
-        return a.moveValue == b.moveValue;
+    public boolean equals(Move other) {
+        return this.moveValue == other.moveValue;
     }
 
     public short Value() {
@@ -140,13 +142,15 @@ public class Move {
 
     }
 
-    public String Name() {
-        return BoardRepresentation.SquareNameFromIndex(StartSquare()) + "-"
-                + BoardRepresentation.SquareNameFromIndex(TargetSquare());
+    @Override
+    public String toString() {
+        return BoardUtility.getSquareNameFromIndex(getStartSquare()) + ""
+                + BoardUtility.getSquareNameFromIndex(getTargetSquare());
     }
 
     private static boolean isValidLan(String lan) {
         lan = lan.toLowerCase();
         return lan.matches("^[a-h][1-8][a-h][1-8][qrbn]?$");
     }
+
 }

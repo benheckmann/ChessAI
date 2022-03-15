@@ -1,8 +1,6 @@
-package core;
+package core.util;
 
-import core.util.*;
-
-public class BoardRepresentation {
+public class BoardUtility {
     public static final String fileNames = "abcdefgh";
     public static final String rankNames = "12345678";
 
@@ -34,32 +32,31 @@ public class BoardRepresentation {
         return squareIndex & 0b000111;
     }
 
-    // getter
-    public static int IndexFromCoord(int fileIndex, int rankIndex) {
+    public static int getIndexFromCoord(int fileIndex, int rankIndex) {
         return rankIndex * 8 + fileIndex;
     }
 
-    public static int IndexFromCoord(Coord coord) {
-        return IndexFromCoord(coord.fileIndex, coord.rankIndex);
+    public static int getIndexFromCoord(Coord coord) {
+        return getIndexFromCoord(coord.fileIndex, coord.rankIndex);
     }
 
-    public static int IndexFromSquareName(String squareName) {
-        return IndexFromCoord(CoordFromSquareName(squareName));
+    public static int getIndexFromSquareName(String squareName) {
+        return getIndexFromCoord(getCoordFromSquareName(squareName));
     }
 
-    public static Coord CoordFromIndex(int squareIndex) {
+    public static Coord getCoordFromIndex(int squareIndex) {
         return new Coord(FileIndex(squareIndex), RankIndex(squareIndex));
     }
 
-    public static boolean LightSquare(int fileIndex, int rankIndex) {
+    public static boolean isLightSquare(int fileIndex, int rankIndex) {
         return (fileIndex + rankIndex) % 2 != 0;
     }
 
-    public static String SquareNameFromCoordinate(int fileIndex, int rankIndex) {
+    public static String getSquareNameFromCoordinate(int fileIndex, int rankIndex) {
         return "" + fileNames.charAt(fileIndex) + (rankIndex + 1);
     }
 
-    public static Coord CoordFromSquareName(String squareName) {
+    public static Coord getCoordFromSquareName(String squareName) {
         if (squareName.length() != 2 ||
                 !fileNames.contains(squareName.substring(0, 1)) ||
                 !rankNames.contains(squareName.substring(1))) {
@@ -70,11 +67,11 @@ public class BoardRepresentation {
         return new Coord(fileIndex, rankIndex);
     }
 
-    public static String SquareNameFromIndex(int squareIndex) {
-        return SquareNameFromCoordinate(CoordFromIndex(squareIndex));
+    public static String getSquareNameFromIndex(int squareIndex) {
+        return getSquareNameFromCoordinate(getCoordFromIndex(squareIndex));
     }
 
-    public static String SquareNameFromCoordinate(Coord coord) {
-        return SquareNameFromCoordinate(coord.fileIndex, coord.rankIndex);
+    public static String getSquareNameFromCoordinate(Coord coord) {
+        return getSquareNameFromCoordinate(coord.fileIndex, coord.rankIndex);
     }
 }

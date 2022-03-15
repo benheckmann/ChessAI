@@ -1,11 +1,13 @@
-package core;
+package core.util;
 
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-public class Zobrist {
-    static final int seed = 2361912;
+import core.*;
+
+public class ZobristHashing {
+    static final int SEED = 2361912;
     static final String randomNumbersFileName = "RandomNumbers.txt";
 
     /// piece type, colour, square index
@@ -15,33 +17,33 @@ public class Zobrist {
     public static final long[] enPassantFile = new long[9]; // no need for rank info as side to move is included in key
     public static final long sideToMove;
 
-    static Random prng = new Random(seed);
+    static Random prng = new Random(SEED);
 
-    static void WriteRandomNumbers() throws FileNotFoundException {
-        prng = new Random(seed);
+    static void writeRandomNumbers() throws FileNotFoundException {
+        prng = new Random(SEED);
         String randomNumberString = "";
         int numRandomNumbers = 64 * 8 * 2 + castlingRights.length + 9 + 1;
 
         for (int i = 0; i < numRandomNumbers; i++) {
-            randomNumberString += RandomUnsigned64BitNumber();
+            randomNumberString += getRandomUnsigned64BitNumber();
             if (i != numRandomNumbers - 1) {
                 randomNumberString += ',';
             }
         }
-        var writer = new PrintWriter(randomNumbersPath());
+        var writer = new PrintWriter(getRandomNumbersPath());
         writer.write(randomNumberString);
         writer.close();
     }
 
-    static Queue<Long> ReadRandomNumbers () throws IOException {
-        Path path = Paths.get(randomNumbersPath());
+    static Queue<Long> readRandomNumbers () throws IOException {
+        Path path = Paths.get(getRandomNumbersPath());
         if (!java.nio.file.Files.exists(path)) {
-            WriteRandomNumbers();
+            writeRandomNumbers();
         }
 
         Queue<Long> randomNumbers = new LinkedList<Long>();
 
-        var reader = new BufferedReader(new FileReader(randomNumbersPath()));
+        var reader = new BufferedReader(new FileReader(getRandomNumbersPath()));
         String numbersString = reader.readLine();
         reader.close ();
 
@@ -56,15 +58,15 @@ public class Zobrist {
     static {
         var randomNumbers = (Queue<Long>) new LinkedList<Long>();
         try {
-            randomNumbers = ReadRandomNumbers();
+            randomNumbers = readRandomNumbers();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         for (int squareIndex = 0; squareIndex < 64; squareIndex++) {
             for (int pieceIndex = 0; pieceIndex < 8; pieceIndex++) {
-                piecesArray[pieceIndex][Board.WhiteIndex][squareIndex] = randomNumbers.poll();
-                piecesArray[pieceIndex][Board.BlackIndex][squareIndex] = randomNumbers.poll();
+                piecesArray[pieceIndex][Board.WHITE_INDEX][squareIndex] = randomNumbers.poll();
+                piecesArray[pieceIndex][Board.BLACK_INDEX][squareIndex] = randomNumbers.poll();
             }
         }
 
@@ -82,15 +84,15 @@ public class Zobrist {
     /// Calculate zobrist key from current board position. This should only be used
     /// after setting board from fen; during search the key should be updated
     /// incrementally.
-    public static long CalculateZobristKey (Board board) {
+    public static long calculateZobristKey (Board board) {
         long zobristKey = 0;
 
         for (int squareIndex = 0; squareIndex < 64; squareIndex++) {
             if (board.Square[squareIndex] != 0) {
-                int pieceType = Piece.PieceType (board.Square[squareIndex]);
-                int pieceColour = Piece.Colour (board.Square[squareIndex]);
+                int pieceType = Piece.getPieceType (board.Square[squareIndex]);
+                int pieceColour = Piece.getColour (board.Square[squareIndex]);
 
-                zobristKey ^= piecesArray[pieceType][(pieceColour == Piece.White) ? Board.WhiteIndex : Board.BlackIndex][squareIndex];
+                zobristKey ^= piecesArray[pieceType][(pieceColour == Piece.White) ? Board.WHITE_INDEX : Board.BLACK_INDEX][squareIndex];
             }
         }
 
@@ -99,7 +101,7 @@ public class Zobrist {
             zobristKey ^= enPassantFile[epIndex];
         }
 
-        if (board.ColourToMove == Piece.Black) {
+        if (board.colourToMove == Piece.Black) {
             zobristKey ^= sideToMove;
         }
 
@@ -108,12 +110,11 @@ public class Zobrist {
         return zobristKey;
     }
 
-    // getter
-    static String randomNumbersPath() {
+    static String getRandomNumbersPath() {
         return Paths.get(randomNumbersFileName).toString();
     }
 
-    static long RandomUnsigned64BitNumber() {
+    static long getRandomUnsigned64BitNumber() {
         byte[] buffer = new byte[8];
         prng.nextBytes(buffer);
         return toInt64(buffer);

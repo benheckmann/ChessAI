@@ -9,7 +9,6 @@ public class Coord implements Comparable<Coord> {
         this.rankIndex = rankIndex;
     }
 
-    // getter
     public boolean IsLightSquare () {
         return (fileIndex + rankIndex) % 2 != 0;
     }

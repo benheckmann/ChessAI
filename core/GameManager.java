@@ -1,9 +1,9 @@
 package core;
 
+import core.ai.*;
 import core.util.*;
 
 import java.util.List;
-import java.util.Scanner;
 import java.util.LinkedList;
 
 public class GameManager implements Runnable {
@@ -22,8 +22,6 @@ public class GameManager implements Runnable {
 	public PlayerType whitePlayerType;
 	public PlayerType blackPlayerType;
 
-	// public AISettings aiSettings;
-
 	Result gameResult;
 
 	Player whitePlayer;
@@ -41,8 +39,6 @@ public class GameManager implements Runnable {
 		gameMoves = new LinkedList<Move>();
 		board = new Board();
 		searchBoard = new Board();
-		// aiSettings.diagnostics = new Search.SearchDiagnostics (); // TODO uncomment
-		// when search is implemented
 		whitePlayerType = askPlayerType(true);
 		blackPlayerType = askPlayerType(false);
 		NewGame(whitePlayerType, blackPlayerType);
@@ -53,7 +49,7 @@ public class GameManager implements Runnable {
 
 		if (gameResult == Result.Playing) {
 			// LogAIDiagnostics ();
-			playerToMove.Update();
+			playerToMove.update();
 		}
 	}
 
@@ -63,14 +59,13 @@ public class GameManager implements Runnable {
 
 		gameMoves.add(move);
 		NotifyPlayerToMove();
-		// display new state
-	}
-
-	public void NewComputerVersusComputerGame() {
-		NewGame(PlayerType.AI, PlayerType.AI);
 	}
 
 	void NewGame(PlayerType whitePlayerType, PlayerType blackPlayerType) {
+		// if (whitePlayerType == PlayerType.AI || blackPlayerType == PlayerType.AI) {
+		// 	System.out.println("Error: AI is not yet implemented");
+		// 	return;
+		// }
 		gameMoves.clear();
 		if (loadCustomPosition) {
 			board.LoadPosition(customPosition);
@@ -79,13 +74,13 @@ public class GameManager implements Runnable {
 			board.LoadStartPosition();
 			searchBoard.LoadStartPosition();
 		}
-		boolean isWhitePerspective = blackPlayerType.equals(PlayerType.Human) && whitePlayerType.equals(PlayerType.AI)
+		boolean isWhitePerspective = blackPlayerType == PlayerType.Human && whitePlayerType == PlayerType.AI
 				? false
 				: true;
 		ui = new BoardDisplayer(board, isWhitePerspective);
 
-		CreatePlayer(whitePlayer, whitePlayerType);
-		CreatePlayer(blackPlayer, blackPlayerType);
+		whitePlayer = CreatePlayer(whitePlayerType, true);
+		blackPlayer = CreatePlayer(blackPlayerType, false);
 
 		gameResult = Result.Playing;
 		PrintGameResult(gameResult);
@@ -95,11 +90,11 @@ public class GameManager implements Runnable {
 
 	void NotifyPlayerToMove() {
 		gameResult = GetGameState();
+		ui.displayCurrentState();
 		PrintGameResult(gameResult);
 
 		if (gameResult == Result.Playing) {
-			playerToMove = (board.WhiteToMove) ? whitePlayer : blackPlayer;
-			playerToMove.NotifyTurnToMove();
+			getPlayerToMove().notifyTurnToMove();
 
 		} else {
 			System.out.println("Game Over!");
@@ -130,12 +125,12 @@ public class GameManager implements Runnable {
 
 	Result GetGameState() {
 		MoveGenerator moveGenerator = new MoveGenerator();
-		var moves = moveGenerator.GenerateMoves(board);
+		var moves = moveGenerator.generateMoves(board);
 
 		// Look for mate/stalemate
 		if (moves.size() == 0) {
-			if (moveGenerator.InCheck()) {
-				return (board.WhiteToMove) ? Result.WhiteIsMated : Result.BlackIsMated;
+			if (moveGenerator.isInCheck()) {
+				return (board.whiteToMove) ? Result.WhiteIsMated : Result.BlackIsMated;
 			}
 			return Result.Stalemate;
 		}
@@ -152,11 +147,11 @@ public class GameManager implements Runnable {
 		}
 
 		// Look for insufficient material (not all cases implemented yet)
-		int numPawns = board.pawns[Board.WhiteIndex].Count() + board.pawns[Board.BlackIndex].Count();
-		int numRooks = board.rooks[Board.WhiteIndex].Count() + board.rooks[Board.BlackIndex].Count();
-		int numQueens = board.queens[Board.WhiteIndex].Count() + board.queens[Board.BlackIndex].Count();
-		int numKnights = board.knights[Board.WhiteIndex].Count() + board.knights[Board.BlackIndex].Count();
-		int numBishops = board.bishops[Board.WhiteIndex].Count() + board.bishops[Board.BlackIndex].Count();
+		int numPawns = board.pawns[Board.WHITE_INDEX].size() + board.pawns[Board.BLACK_INDEX].size();
+		int numRooks = board.rooks[Board.WHITE_INDEX].size() + board.rooks[Board.BLACK_INDEX].size();
+		int numQueens = board.queens[Board.WHITE_INDEX].size() + board.queens[Board.BLACK_INDEX].size();
+		int numKnights = board.knights[Board.WHITE_INDEX].size() + board.knights[Board.BLACK_INDEX].size();
+		int numBishops = board.bishops[Board.WHITE_INDEX].size() + board.bishops[Board.BLACK_INDEX].size();
 
 		if (numPawns + numRooks + numQueens == 0) {
 			if (numKnights == 1 || numBishops == 1) {
@@ -167,29 +162,31 @@ public class GameManager implements Runnable {
 		return Result.Playing;
 	}
 
-	void CreatePlayer(Player player, PlayerType playerType) {
-		if (playerType == PlayerType.Human) {
-			player = new HumanPlayer(this, board);
-		} else {
-			// player = new AIPlayer(searchBoard, aiSettings);
-		}
+	private Player CreatePlayer(PlayerType playerType, boolean isWhite) {
+		return playerType == PlayerType.Human ? new HumanPlayer(this, board, isWhite) : new AIPlayer(this, board);
 	}
 
 	private PlayerType askPlayerType(boolean forWhite) {
 		String color = forWhite ? "white" : "black";
 		System.out.println("Please chose human or computer as " + color + ". (h/c)");
-		Scanner sc = new Scanner(System.in);
-		String input = "";
-		while (!input.equals("h") && !input.equals("c")) {
-			sc.nextLine();
+		String input = System.console().readLine();
+		if (input.equals("h")) {
+			return PlayerType.Human;
+		} else if (input.equals("c")) {
+			return PlayerType.AI;
+		} else {
+			System.out.println("Invalid input. Please try again.");
+			return askPlayerType(forWhite);
 		}
-		sc.close();
-		return input.equals("c") ? PlayerType.Human : PlayerType.AI;
+	}
+
+	public Player getPlayerToMove() {
+		return (board.whiteToMove) ? whitePlayer : blackPlayer;
 	}
 
 	public static void main(String[] args) {
 		GameManager gm = new GameManager();
 		gm.run();
 	}
-	
+
 }

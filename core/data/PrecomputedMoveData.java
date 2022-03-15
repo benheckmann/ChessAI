@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import core.Board;
-import core.BoardRepresentation;
+import core.util.BoardUtility;
 import core.util.Coord;
 
 	public class PrecomputedMoveData {
@@ -58,7 +58,6 @@ import core.util.Coord;
 		static {
 			pawnAttacksWhite = new int[64][];
 			pawnAttacksBlack = new int[64][];
-			numSquaresToEdge = new int[8][];
 			knightMoves = new byte[64][];
 			kingMoves = new byte[64][];
 			numSquaresToEdge = new int[64][];
@@ -144,29 +143,31 @@ import core.util.Coord;
 				if (x > 0) {
 					if (y < 7) {
 						pawnCapturesWhite.add(squareIndex + 7);
-						pawnAttackBitboards[squareIndex][Board.WhiteIndex] |= 1l << (squareIndex + 7);
+						pawnAttackBitboards[squareIndex][Board.WHITE_INDEX] |= 1l << (squareIndex + 7);
 					}
 					if (y > 0) {
 						pawnCapturesBlack.add(squareIndex - 9);
-						pawnAttackBitboards[squareIndex][Board.BlackIndex] |= 1l << (squareIndex - 9);
+						pawnAttackBitboards[squareIndex][Board.BLACK_INDEX] |= 1l << (squareIndex - 9);
 					}
 				}
 				if (x < 7) {
 					if (y < 7) {
 						pawnCapturesWhite.add(squareIndex + 9);
-						pawnAttackBitboards[squareIndex][Board.WhiteIndex] |= 1l << (squareIndex + 9);
+						pawnAttackBitboards[squareIndex][Board.WHITE_INDEX] |= 1l << (squareIndex + 9);
 					}
 					if (y > 0) {
 						pawnCapturesBlack.add(squareIndex - 7);
-						pawnAttackBitboards[squareIndex][Board.BlackIndex] |= 1l << (squareIndex - 7);
+						pawnAttackBitboards[squareIndex][Board.BLACK_INDEX] |= 1l << (squareIndex - 7);
 					}
 				}
 				pawnAttacksWhite[squareIndex] = new int[pawnCapturesWhite.size()];
+				for (int i = 0; i < pawnCapturesWhite.size(); i++) {
+					pawnAttacksWhite[squareIndex][i] = pawnCapturesWhite.get(i);
+				}
 				pawnAttacksBlack[squareIndex] = new int[pawnCapturesBlack.size()];
-                for (int i = 0; i < pawnCapturesWhite.size(); i++) {
-                    pawnAttacksWhite[squareIndex][i] = pawnCapturesWhite.get(i);
-                    pawnAttacksBlack[squareIndex][i] = pawnCapturesBlack.get(i);
-                }
+				for (int i = 0; i < pawnCapturesBlack.size(); i++) {
+					pawnAttacksBlack[squareIndex][i] = pawnCapturesBlack.get(i);
+				}
 
 				// Rook moves
 				for (int directionIndex = 0; directionIndex < 4; directionIndex++) {
@@ -208,14 +209,14 @@ import core.util.Coord;
 			kingDistance = new int[64][64];
 			centreManhattanDistance = new int[64];
 			for (int squareA = 0; squareA < 64; squareA++) {
-				Coord coordA = BoardRepresentation.CoordFromIndex (squareA);
+				Coord coordA = BoardUtility.getCoordFromIndex (squareA);
 				int fileDstFromCentre = Math.max(3 - coordA.fileIndex, coordA.fileIndex - 4);
 				int rankDstFromCentre = Math.max(3 - coordA.rankIndex, coordA.rankIndex - 4);
 				centreManhattanDistance[squareA] = fileDstFromCentre + rankDstFromCentre;
 
 				for (int squareB = 0; squareB < 64; squareB++) {
 
-					Coord coordB = BoardRepresentation.CoordFromIndex (squareB);
+					Coord coordB = BoardUtility.getCoordFromIndex (squareB);
 					int rankDistance = Math.abs(coordA.rankIndex - coordB.rankIndex);
 					int fileDistance = Math.abs(coordA.fileIndex - coordB.fileIndex);
 					orthogonalDistance[squareA][squareB] = fileDistance + rankDistance;
